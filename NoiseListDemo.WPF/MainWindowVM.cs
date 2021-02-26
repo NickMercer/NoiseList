@@ -1,4 +1,4 @@
-﻿using NoiseList;
+﻿using NoiseLists;
 using System.Collections.Generic;
 
 namespace NoiseListDemo.WPF
@@ -15,12 +15,6 @@ namespace NoiseListDemo.WPF
         public MainWindowVM()
         {
             StuffList = NoiseList<Stuff>.Build(10);
-
-            //StuffList = new List<Stuff>
-            //{
-            //    new Stuff(1,"lol", 3.0f, true),
-            //    new Stuff(2, "no", 3.1f, false)
-            //};
         }
     }
 }

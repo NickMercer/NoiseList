@@ -3,10 +3,22 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 
-namespace NoiseList
+namespace NoiseLists
 {
+    //Trying to figure out delegate nonsense.
+
     public static class NoiseList<T> 
     {
+        private delegate object RandomDelegate<U>(TypeRange<U> range);
+
+        private static Dictionary<Type, RandomDelegate> _defaultFunctionMap = new Dictionary<Type, RandomDelegate>();
+        private static Dictionary<Type, TypeRange<Type>> _defaultRangeMap = new Dictionary<Type, TypeRange<Type>>();
+
+        static NoiseList()
+        {
+            _defaultFunctionMap.Add(typeof(int), new RandomDelegate<int>(RandomInt);
+        }
+
         public static List<T> Build(int count = 0)
         {
             var listType = typeof(T);
@@ -26,33 +38,20 @@ namespace NoiseList
             return returnList;
         }
 
-        private static T SetRandomValue(System.Reflection.PropertyInfo property, T returnObject)
+        internal static T SetRandomValue(System.Reflection.PropertyInfo property, T returnObject)
         {
-            
+            var type = property.PropertyType;
+            var range = _defaultRangeMap[property.PropertyType];
+            var result = _defaultFunctionMap[property.PropertyType](range);
 
-            switch (property.PropertyType.Name.ToString().ToLower())
-            {
-                case "int32":
-                    property.SetValue(returnObject, 5);
-                    break;
-
-                case "boolean":
-                    property.SetValue(returnObject, true);
-                    break;
-
-                case "string":
-                    property.SetValue(returnObject, "lolfail");
-                    break;
-
-                case "single":
-                    property.SetValue(returnObject, 0.2f);
-                    break;
-
-                default:
-                    break;
-            }
+            property.SetValue(returnObject, result);
 
             return returnObject;
+        }
+
+        internal static object RandomInt(TypeRange<int> range)
+        {
+            return int.MinValue;
         }
     }
 }
