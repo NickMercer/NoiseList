@@ -1,22 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 
 namespace NoiseLists
 {
     //Trying to figure out delegate nonsense.
 
-    public static class NoiseList<T> 
+    public static class NoiseList<T>
     {
-        private delegate object RandomDelegate<U>(TypeRange<U> range);
-
-        private static Dictionary<Type, RandomDelegate> _defaultFunctionMap = new Dictionary<Type, RandomDelegate>();
-        private static Dictionary<Type, TypeRange<Type>> _defaultRangeMap = new Dictionary<Type, TypeRange<Type>>();
+        private static Dictionary<Type, Func<object>> _typeResolvers = new Dictionary<Type, Func<object>>();
+        private static Random _random;
 
         static NoiseList()
         {
-            _defaultFunctionMap.Add(typeof(int), new RandomDelegate<int>(RandomInt);
+            _random = new Random();
+
+            _typeResolvers.Add(typeof(string), RandomString);
+            _typeResolvers.Add(typeof(int), RandomInt);
+            _typeResolvers.Add(typeof(float), RandomFloat);
+            _typeResolvers.Add(typeof(bool), RandomBool);
         }
 
         public static List<T> Build(int count = 0)
@@ -41,17 +45,40 @@ namespace NoiseLists
         internal static T SetRandomValue(System.Reflection.PropertyInfo property, T returnObject)
         {
             var type = property.PropertyType;
-            var range = _defaultRangeMap[property.PropertyType];
-            var result = _defaultFunctionMap[property.PropertyType](range);
+            var result = Convert.ChangeType(_typeResolvers[type].Invoke(), type);
 
             property.SetValue(returnObject, result);
 
             return returnObject;
         }
 
-        internal static object RandomInt(TypeRange<int> range)
+        internal static object RandomInt()
         {
-            return int.MinValue;
+            return _random.Next(int.MinValue, int.MaxValue);
         }
+
+        private static object RandomString()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            
+            var length = 10;
+            var randomString =  new string(Enumerable.Repeat(chars, length).Select(s => s[_random.Next(s.Length)]).ToArray());
+            
+            return randomString;
+        }
+
+        private static object RandomFloat()
+        {
+            var max = 10000f;
+            var min = -10000f;
+            double val = (_random.NextDouble() * (max - min) + min);
+            return (float)val;
+        }
+
+        private static object RandomBool()
+        {
+            return _random.Next(2) == 1 ? true : false;
+        }
+
     }
 }
