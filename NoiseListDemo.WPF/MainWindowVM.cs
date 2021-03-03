@@ -14,7 +14,7 @@ namespace NoiseListDemo.WPF
 
         public MainWindowVM()
         {
-            StuffList = NoiseList<Stuff>.Build(10);
+            StuffList = NoiseList<Stuff>.Build(1);
         }
     }
 }

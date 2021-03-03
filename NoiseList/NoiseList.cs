@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace NoiseLists
@@ -23,7 +24,7 @@ namespace NoiseLists
             _typeResolvers.Add(typeof(bool), RandomBool);
         }
 
-        public static List<T> Build(int count = 0)
+        public static List<T> Build(int count)
         {
             var listType = typeof(T);
 
@@ -42,15 +43,50 @@ namespace NoiseLists
             return returnList;
         }
 
-        internal static T SetRandomValue(System.Reflection.PropertyInfo property, T returnObject)
+        internal static T BuildSingle<T>()
         {
-            var type = property.PropertyType;
-            var result = Convert.ChangeType(_typeResolvers[type].Invoke(), type);
+            var objectType = typeof(T);
 
-            property.SetValue(returnObject, result);
+            var returnObject = (T)Activator.CreateInstance(objectType);
+            foreach (var property in objectType.GetProperties())
+            {
+                returnObject = SetRandomValue(property, returnObject);
+            }
 
             return returnObject;
         }
+
+        internal static T SetRandomValue<T>(System.Reflection.PropertyInfo property, T returnObject)
+        {
+            var type = property.PropertyType;
+
+
+            if(!_typeResolvers.ContainsKey(type) && type.IsClass)
+            {
+                object propertyResult = CreateNestedObject(type);
+                property.SetValue(returnObject, propertyResult);
+            }
+            else
+            {
+                var result = Convert.ChangeType(_typeResolvers[type].Invoke(), type);
+                property.SetValue(returnObject, result);
+            }
+
+
+            return returnObject;
+        }
+
+        private static object CreateNestedObject(Type type)
+        {
+            var thisType = typeof(NoiseList<>);
+            var invokeType = thisType.MakeGenericType(type);
+            var buildMethod = invokeType.GetMethod("BuildSingle", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Static);
+            var buildTypeMethod = buildMethod.MakeGenericMethod(new[] { type });
+            var propertyResult = buildTypeMethod.Invoke(null, null);
+            return propertyResult;
+        }
+
+        #region Default Primitive Implementations
 
         internal static object RandomInt()
         {
@@ -79,6 +115,8 @@ namespace NoiseLists
         {
             return _random.Next(2) == 1 ? true : false;
         }
+
+        #endregion
 
     }
 }
